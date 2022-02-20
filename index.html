@@ -1,0 +1,257 @@
+ 
+<style>
+ 
+body, html
+{
+  background:#1c1e1f;
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Consolas 
+}
+* {
+user-select:none
+}
+#tabs {
+  display: flex;
+  background: transparent;
+  box-shadow: inset 0 -1px rgba(0,0,0,0.125);
+  overflow: hidden;
+  height: 40px;
+  user-select: none;
+  -moz-user-select: none;
+  font-size: 14px;
+  color: white;
+  
+}
+
+.marker {
+  background: whitesmoke;
+  width: 1px;
+}
+/* .tab, .marker { */
+.tab {
+  padding: 0 8px;
+  flex: 1 1 240px;
+  min-width: 100px;
+  max-width: 220px;
+  margin-right: 1px;
+  background:#1b1d1e
+}
+.tab {
+  position: relative;
+  line-height: 40px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.125);
+  color:#858c98
+ /* border-radius:4px 4px 0px 0px */
+ 
+}
+.tab:hover {
+  opacity:0.9
+}
+.tab:active {
+  background:#363636;
+}
+ 
+.tab::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #888;
+  transform: scaleX(0.9);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.2, 1, 0.2, 1);
+}
+
+.tab.active::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+.tab.active::after {
+  background: #3962ad;
+  opacity: 1;
+}
+
+.tab.drag-over {
+  opacity:0.7
+}
+
+.tab.active {
+	background:#121415;
+    color:white
+}
+ 
+#materialBoard {
+  background:#121415;
+  width:100%;
+  height:100%;
+  padding:20px;
+  box-sizing: border-box;
+  color:#c6cee5;
+  font-family:Verdana 
+}
+</style>
+
+
+
+
+
+<body>
+<div id="tabs">
+  
+</div>
+<div id='materialBoard'>
+ hi
+</div>
+</body>
+
+
+<script>
+ 
+const marker = document.createElement("div");
+const placeholder = document.createElement("div");
+marker.classList.add("marker");
+let drag = null;
+let lastDragOver = null;
+
+function findByName(val, tabb) {
+  let result = tabb.find(obj => {
+    return obj.name === val
+  })
+  return result
+}
+var tabbars = [];
+function tabRay(tabs) {
+    tabbars[0] = document.createElement("div");
+
+    tabbars[0].id = "tabs";
+    document.getElementById('tabs').appendChild(tabbars[0]);
+
+    this.amount = tabs.length;
+    this.tabs = [];
+
+    for (var x in tabs) {
+        var y = document.createElement("div");
+        y.classList.add("tab");
+        y.draggable = "true";
+        console.log(this.tabss);
+        this.tabs.push(y);
+        this.tabs[x] = {
+          tab:y,
+          name:tabs[x],
+          type:"editor" /*other examples: viewer, welcome, settings, other (others will not contain path, clevercode, file) default icons for certain types. application tabs: welcome, settings*/,
+          icon:null /*examples: 'C:/icon.png svg?'n application tabs have default icons like: */,
+          path:'C:/',
+          file:'js',
+          clevercode:''
+        };
+        y.innerText = this.tabs[x].name;
+        tabbars[0].appendChild(y);
+        if (x == this.amount - 1) {
+            y.classList.add("active");
+        }
+    }
+    // tabs[tabs.length - 1].classList.add("active")
+}
+var x = new tabRay(['document', 'file system', 'home', 'setting', 'help support', 'web preferences']);
+
+for (let tab of tabbars[0].children) {
+    tab.addEventListener("mousedown", (event) => {
+        const active = tabbars[0].querySelector(".tab.active");
+        if (active) active.classList.remove("active");
+        tab.classList.add("active");
+    });
+
+    tab.addEventListener(
+        "dragstart",
+        (event) => {
+            event.dataTransfer.setData("text/plain", tab.textContent);
+            event.dataTransfer.dropEffect = "move";
+            drag = event.target;
+            drag.classList.add("dragging");
+            tabbars[0].classList.add("dragging-in-progress");
+        },
+        false
+    );
+
+    tab.addEventListener(
+        "dragover",
+        (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            event.dataTransfer.dropEffect = "move";
+            if (tab === drag) return;
+            if (tab === lastDragOver) return;
+            if (lastDragOver) lastDragOver.classList.remove("drag-over");
+            lastDragOver = tab;
+            tab.classList.add("drag-over");
+            tabbars[0].insertBefore(marker, tab);
+            // console.log(`dragover ${drag.textContent} : ${tab.textContent}`);
+        },
+        false
+    );
+
+    tab.addEventListener(
+        "drop",
+        (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            swap(drag, tab);
+        },
+        false
+    );
+}
+
+tabbars[0].addEventListener(
+    "dragover",
+    (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        if (tabbars[0] === lastDragOver) return;
+        if (lastDragOver) lastDragOver.classList.remove("drag-over");
+        lastDragOver = tabbars[0];
+        tabbars[0].append(marker);
+    },
+    false
+);
+
+tabbars[0].addEventListener(
+    "dragend",
+    (event) => {
+        if (lastDragOver) lastDragOver.classList.remove("drag-over");
+        lastDragOver = null;
+        drag.classList.remove("dragging");
+        drag = null;
+        tabbars[0].classList.remove("dragging-in-progress");
+        tabbars[0].removeChild(marker);
+    },
+    false
+);
+
+tabbars[0].addEventListener(
+    "drop",
+    (event) => {
+        event.preventDefault();
+        // const data = event.dataTransfer.getData('text/plain');
+        // console.log(`drop ${data} on tabbars[0]`);
+        tabs.appendChild(drag);
+    },
+    false
+);
+
+// Assumes same parent
+function swap(n1, n2) {
+    if (n1 === n2) return;
+    const parent = n1.parentNode;
+    parent.replaceChild(placeholder, n1);
+    parent.insertBefore(n1, n2);
+    parent.insertBefore(n2, placeholder);
+    parent.removeChild(placeholder);
+}
+</script>
